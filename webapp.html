@@ -4,8 +4,60 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>HRWebApp Calculator</title>
-<link rel="stylesheet" href="style.css">
-<script src="script.js" defer></script>
+
+<style>
+body {
+    background: #0d1117;
+    color: white;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+.card {
+    background: #161b22;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #30363d;
+    max-width: 480px;
+    margin: auto;
+}
+label {
+    margin-top: 12px;
+    display: block;
+    opacity: 0.8;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 4px;
+    background: #0d1117;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 10px;
+    font-size: 16px;
+}
+.buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+button {
+    width: 48%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.send {
+    background: #2ea043;
+    color: white;
+}
+.clear {
+    background: #444;
+    color: white;
+}
+</style>
 </head>
 <body>
 
@@ -32,6 +84,35 @@
         <button class="clear" onclick="clearForm()">Очистить</button>
     </div>
 </div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+console.log("WEBAPP LOADED INLINE v1");
+
+function sendData() {
+    const payload = {
+        d1: document.getElementById("d1").value.trim(),
+        d2: document.getElementById("d2").value.trim(),
+        used_work: Number(document.getElementById("used_work").value || 0),
+        used_cal: Number(document.getElementById("used_cal").value || 0),
+        prog: Number(document.getElementById("prog").value || 0)
+    };
+
+    console.log("SEND PAYLOAD:", payload);
+
+    tg.sendData(JSON.stringify(payload));
+}
+
+function clearForm() {
+    document.getElementById("d1").value = "";
+    document.getElementById("d2").value = "";
+    document.getElementById("used_work").value = "";
+    document.getElementById("used_cal").value = "";
+    document.getElementById("prog").value = "";
+}
+</script>
 
 </body>
 </html>
