@@ -1,0 +1,41 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 16px;
+}
+
+h2 {
+  text-align: center;
+}
+
+.card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  max-width: 420px;
+  margin: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+}
+
+button {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  background: #2a7fff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+}
