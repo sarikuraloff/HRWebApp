@@ -1,95 +1,146 @@
+// ===== Telegram WebApp init =====
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-function num(id) {
-  const v = document.getElementById(id).value;
-  return v === "" ? 0 : Number(v);
-}
+// ===== Elements =====
+const form = document.getElementById("calc-form");
+const resultBlock = document.getElementById("result");
 
-// === ОСНОВНАЯ ЛОГИКА ===
-document.getElementById("calcBtn").addEventListener("click", () => {
+// ===== Utils =====
+const daysBetween = (a, b) => {
+  const ms = b.getTime() - a.getTime();
+  return Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
+};
+
+const calcPeriod = (start, end, minusDays, rate) => {
+  if (end < start) return {
+    days: 0,
+    effective: 0,
+    months: 0,
+    rest: 0,
+    roundedMonths: 0,
+    result: 0
+  };
+
+  const days = daysBetween(start, end);
+  const effective = Math.max(days - minusDays, 0);
+
+  const months = Math.floor(effective / 30);
+  const rest = effective % 30;
+  const roundedMonths = rest >= 15 ? months + 1 : months;
+  const result = roundedMonths * rate;
+
+  return {
+    days,
+    effective,
+    months,
+    rest,
+    roundedMonths,
+    result
+  };
+};
+
+// ===== Submit =====
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  // ===== Read inputs =====
   const d1 = new Date(document.getElementById("d1").value);
   const d2 = new Date(document.getElementById("d2").value);
 
-  if (isNaN(d1) || isNaN(d2)) {
-    tg.showAlert("❌ Укажите корректные даты");
+  const usedWork = Number(document.getElementById("used_work").value || 0);
+  const usedCal = Number(document.getElementById("used_cal").value || 0);
+
+  const progOld = Number(document.getElementById("prog_old").value || 0);
+  const progNew = Number(document.getElementById("prog_new").value || 0);
+
+  const bsOld = Number(document.getElementById("bs_old").value || 0);
+  const bsNew = Number(document.getElementById("bs_new").value || 0);
+
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
+    alert("Введите корректные даты");
     return;
   }
 
-  const usedWork = num("used_work");
-  const usedCal = num("used_cal");
-  const usedTotal = usedWork + usedCal;
-
-  const progOld = num("prog_old");
-  const progNew = num("prog_new");
-
-  // 🔹 граница периодов
+  // ===== Border date =====
   const border = new Date("2023-04-29");
 
-  // ===== СТАРЫЙ ПЕРИОД =====
+  // ===== Old period =====
   const oldStart = d1;
   const oldEnd = d2 < border ? d2 : border;
 
-  let oldDays = Math.max(0, Math.floor((oldEnd - oldStart) / 86400000));
-  oldDays -= progOld;
+  const oldCalc = calcPeriod(
+    oldStart,
+    oldEnd,
+    progOld + bsOld,
+    1.25
+  );
 
-  let oldMonths = Math.floor(oldDays / 30);
-  if (oldDays % 30 >= 15) oldMonths++;
-
-  const oldResult = oldMonths * 1.25;
-
-  // ===== НОВЫЙ ПЕРИОД =====
-  const newStart = d1 > border ? d1 : new Date(border.getTime() + 86400000);
+  // ===== New period =====
+  const newStart =
+    d1 > border ? d1 : new Date(border.getTime() + 24 * 60 * 60 * 1000);
   const newEnd = d2;
 
-  let newDays = Math.max(0, Math.floor((newEnd - newStart) / 86400000));
-  newDays -= progNew;
+  const newCalc = calcPeriod(
+    newStart,
+    newEnd,
+    progNew + bsNew,
+    1.75
+  );
 
-  let newMonths = Math.floor(newDays / 30);
-  if (newDays % 30 >= 15) newMonths++;
+  // ===== Totals =====
+  const accruedTotal = oldCalc.result + newCalc.result;
+  const usedTotal = usedWork + usedCal;
+  const remainder = accruedTotal - usedTotal;
+  const finalCompensation = Math.ceil(remainder);
 
-  const newResult = newMonths * 1.75;
+  // ===== Render result =====
+  resultBlock.innerHTML = `
+    <h3>📊 Результат расчёта</h3>
 
-  // ===== ИТОГ =====
-  const totalAccrued = oldResult + newResult;
-  const remaining = totalAccrued - usedTotal;
-  const final = Math.ceil(remaining);
+    <hr>
 
-  // === ПОКАЗ В MINI APP ===
-  const text = `
-📅 Период: ${d1.toLocaleDateString()} — ${d2.toLocaleDateString()}
+    <h4>🟤 Старый период</h4>
+    <p>Календарные дни: ${oldCalc.days}</p>
+    <p>Прогулы + БС: ${progOld + bsOld}</p>
+    <p>Эффективные дни: ${oldCalc.effective}</p>
+    <p>Месяцы: ${oldCalc.months}</p>
+    <p>Остаток: ${oldCalc.rest}</p>
+    <p><b>Начислено:</b> ${oldCalc.result.toFixed(1)} дней</p>
 
-🟤 Старый период:
-• Дней стажа: ${oldDays}
-• Месяцев: ${oldMonths}
-• Начислено: ${oldResult}
+    <hr>
 
-🟢 Новый период:
-• Дней стажа: ${newDays}
-• Месяцев: ${newMonths}
-• Начислено: ${newResult}
+    <h4>🟢 Новый период</h4>
+    <p>Календарные дни: ${newCalc.days}</p>
+    <p>Прогулы + БС: ${progNew + bsNew}</p>
+    <p>Эффективные дни: ${newCalc.effective}</p>
+    <p>Месяцы: ${newCalc.months}</p>
+    <p>Остаток: ${newCalc.rest}</p>
+    <p><b>Начислено:</b> ${newCalc.result.toFixed(1)} дней</p>
 
-➖ Использовано: ${usedTotal}
+    <hr>
 
-✅ ИТОГО: ${final} дней
-`;
+    <h4>📊 Итог</h4>
+    <p>Всего начислено: ${accruedTotal.toFixed(1)}</p>
+    <p>Использовано: ${usedTotal}</p>
 
-  document.getElementById("resultText").textContent = text;
-  document.getElementById("result").style.display = "block";
+    <h2>✅ Компенсация: ${finalCompensation} дней</h2>
 
-  // === ОТПРАВКА В БОТА ===
-  document.getElementById("sendToBotBtn").onclick = () => {
+    <button id="sendToBot" style="margin-top:12px;">📤 Отправить в Telegram</button>
+  `;
+
+  resultBlock.style.display = "block";
+
+  // ===== Send to bot =====
+  document.getElementById("sendToBot").onclick = () => {
     tg.sendData(JSON.stringify({
-      d1: document.getElementById("d1").value,
-      d2: document.getElementById("d2").value,
-      used_work: usedWork,
-      used_cal: usedCal,
-      prog_old: progOld,
-      prog_new: progNew,
-      old: oldResult,
-      new: newResult,
-      final: final
+      d1: d1.toISOString().slice(0, 10),
+      d2: d2.toISOString().slice(0, 10),
+      old: oldCalc,
+      new: newCalc,
+      used_total: usedTotal,
+      final: finalCompensation
     }));
     tg.close();
   };
