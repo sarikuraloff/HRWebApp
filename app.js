@@ -1,80 +1,130 @@
+// ===== Telegram Mini App init =====
 const tg = window.Telegram.WebApp;
-tg.ready();
 tg.expand();
 
-const form = document.getElementById("calc-form");
+// ===== API URL =====
+const API_URL = "https://YOUR_PYTHON_API_URL/calculate";
+
+// ===== Elements =====
+const form = document.getElementById("calcForm");
 const resultDiv = document.getElementById("result");
+const detailsDiv = document.getElementById("details");
 
-function num(id) {
-  return Number(document.getElementById(id).value || 0);
+// ===== Helpers =====
+function getValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
 }
 
-function daysBetween(d1, d2) {
-  return Math.floor((new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24));
+function toNumber(val) {
+  if (!val) return 0;
+  return Number(val.replace(",", "."));
 }
 
-form.addEventListener("submit", (e) => {
+function showError(text) {
+  tg.showPopup({
+    title: "Ошибка",
+    message: text,
+    buttons: [{ type: "close" }]
+  });
+}
+
+// ===== Submit handler =====
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const d1 = document.getElementById("d1").value;
-  const d2 = document.getElementById("d2").value;
+  const payload = {
+    d1: getValue("d1"),
+    d2: getValue("d2"),
+    used_work: toNumber(getValue("used_work")),
+    used_cal: toNumber(getValue("used_cal")),
+    prog_old: toNumber(getValue("prog_old")),
+    prog_new: toNumber(getValue("prog_new")),
+    bs_old: toNumber(getValue("bs_old")),
+    bs_new: toNumber(getValue("bs_new"))
+  };
 
-  if (!d1 || !d2) {
-    tg.showAlert("❌ Укажите даты");
+  if (!payload.d1 || !payload.d2) {
+    showError("Введите дату приёма и дату увольнения");
     return;
   }
 
-  // граница периодов
-  const border = "2023-04-29";
+  resultDiv.classList.add("hidden");
+  detailsDiv.classList.add("hidden");
 
-  // дни стажа
-  const oldDays = Math.max(
-    0,
-    daysBetween(d1, Math.min(d2, border))
-  );
-  const newDays = Math.max(
-    0,
-    daysBetween(Math.max(d1, border), d2)
-  );
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
 
-  // прогулы
-  const effOld = oldDays - num("prog_old");
-  const effNew = newDays - num("prog_new");
+    if (!response.ok) {
+      throw new Error("Ошибка сервера");
+    }
 
-  // месяцы
-  const oldMonths = Math.ceil(effOld / 30);
-  const newMonths = Math.floor(effNew / 30);
+    const data = await response.json();
 
-  // начисления
-  const oldRes = oldMonths * 1.25;
-  const newRes = newMonths * 1.75;
+    renderResult(data);
+    renderDetails(data);
 
-  const usedTotal = num("used_work") + num("used_cal");
-  const total = oldRes + newRes;
-  const final = Math.round(total - usedTotal);
-
-  // показать результат
-  resultDiv.style.display = "block";
-  resultDiv.innerHTML = `
-    <b>📊 Результат</b><br><br>
-
-    🟤 Старый период: <b>${oldRes.toFixed(1)}</b><br>
-    🟢 Новый период: <b>${newRes.toFixed(1)}</b><br>
-    ➖ Использовано: <b>${usedTotal}</b><br>
-    <hr>
-    ✅ <b>Компенсация: ${final} дней</b><br><br>
-
-    <button id="sendBtn">📤 Отправить в Telegram</button>
-  `;
-
-  // отправка в бот
-  document.getElementById("sendBtn").onclick = () => {
-    tg.sendData(JSON.stringify({
-      d1, d2,
-      oldRes, newRes,
-      usedTotal,
-      final
-    }));
-    tg.close();
-  };
+    tg.HapticFeedback.notificationOccurred("success");
+  } catch (err) {
+    console.error(err);
+    showError("Не удалось выполнить расчёт. Попробуйте позже.");
+    tg.HapticFeedback.notificationOccurred("error");
+  }
 });
+
+// ===== Render result =====
+function renderResult(data) {
+  resultDiv.classList.remove("hidden");
+
+  resultDiv.innerHTML = `
+    <div class="result-main">
+      <strong>КОМПЕНСАЦИЯ: ${data.final} дней</strong>
+    </div>
+    <div class="result-sub">
+      Начислено: ${data.total_accrued} дней<br>
+      Использовано: ${data.used_total} дней
+    </div>
+  `;
+}
+
+// ===== Render detailed breakdown =====
+function renderDetails(data) {
+  detailsDiv.classList.remove("hidden");
+
+  detailsDiv.innerHTML = `
+    <h3>🟤 Старый период</h3>
+    ${data.old.start} – ${data.old.end}<br>
+    Календарные дни: ${data.old.calendar_days}<br>
+    Прогулы: ${data.old.prog}<br>
+    Эффективные дни: ${data.old.effective_days}<br>
+    Месяцы: ${data.old.months_raw} (остаток ${data.old.rest_days})<br>
+    Округление: ${data.old.months_rounded}<br>
+    Начисление: ${data.old.months_rounded} × ${data.old.rate}
+    = <b>${data.old.result}</b>
+
+    <div class="sep"></div>
+
+    <h3>🟢 Новый период</h3>
+    ${data.new.start} – ${data.new.end}<br>
+    Календарные дни: ${data.new.calendar_days}<br>
+    Прогулы: ${data.new.prog}<br>
+    Эффективные дни: ${data.new.effective_days}<br>
+    Месяцы: ${data.new.months_raw} (остаток ${data.new.rest_days})<br>
+    Округление: ${data.new.months_rounded}<br>
+    Начисление: ${data.new.months_rounded} × ${data.new.rate}
+    = <b>${data.new.result}</b>
+
+    <div class="sep"></div>
+
+    <h3>📊 Итог</h3>
+    ${data.old.result} + ${data.new.result} = ${data.total_accrued}<br>
+    − использовано ${data.used_total}<br>
+    → <b>${data.final} дней</b>
+  `;
+}
