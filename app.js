@@ -3,7 +3,7 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 // ===== API URL =====
-const API_URL = "https://YOUR_PYTHON_API_URL/calculate";
+const API_URL = "https://hr-web-app-inky.vercel.app/api/calculate";
 
 // ===== Elements =====
 const form = document.getElementById("calcForm");
@@ -128,3 +128,4 @@ function renderDetails(data) {
     → <b>${data.final} дней</b>
   `;
 }
+
