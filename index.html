@@ -40,8 +40,14 @@
     <input type="number" id="bs_new" value="0">
 
     <button onclick="sendData()">📤 Рассчитать</button>
+    <div id="result" style="display:none; margin-top:20px;">
+    <h3>📊 Результат</h3>
+    <pre id="resultText"></pre>
+
+    <button id="sendToBotBtn">📨 Отправить в Telegram</button>
   </div>
 
   <script src="app.js"></script>
 </body>
 </html>
+
