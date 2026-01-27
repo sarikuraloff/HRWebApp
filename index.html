@@ -2,52 +2,119 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>HRminiBot — Расчёт</title>
+  <title>Расчёт компенсации</title>
 
-  <!-- Telegram Mini App API -->
+  <!-- Telegram WebApp -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 14px;
+      margin-top: 10px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #2f80ed;
+      color: #fff;
+    }
+
+    button:hover {
+      background: #1c6dd5;
+    }
+
+    #result {
+      margin-top: 20px;
+      display: none;
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    hr {
+      margin: 12px 0;
+    }
+  </style>
 </head>
 <body>
 
+<div class="container">
   <h2>📊 Расчёт компенсации</h2>
 
-  <div class="card">
+  <form id="calc-form">
+
     <label>📅 Дата приёма</label>
-    <input type="date" id="d1">
+    <input type="date" id="d1" required />
 
     <label>📅 Дата увольнения</label>
-    <input type="date" id="d2">
+    <input type="date" id="d2" required />
 
     <label>Использовано рабочих дней</label>
-    <input type="number" id="used_work" value="0">
+    <input type="number" id="used_work" value="0" min="0" />
 
     <label>Использовано календарных дней</label>
-    <input type="number" id="used_cal" value="0">
+    <input type="number" id="used_cal" value="0" min="0" />
 
     <label>Прогул (старый период)</label>
-    <input type="number" id="prog_old" value="0">
+    <input type="number" id="prog_old" value="0" min="0" />
 
     <label>Прогул (новый период)</label>
-    <input type="number" id="prog_new" value="0">
+    <input type="number" id="prog_new" value="0" min="0" />
 
     <label>БС (старый период)</label>
-    <input type="number" id="bs_old" value="0">
+    <input type="number" id="bs_old" value="0" min="0" />
 
     <label>БС (новый период)</label>
-    <input type="number" id="bs_new" value="0">
+    <input type="number" id="bs_new" value="0" min="0" />
 
-    <button onclick="sendData()">📤 Рассчитать</button>
-    <div id="result" style="display:none; margin-top:20px;">
-    <h3>📊 Результат</h3>
-    <pre id="resultText"></pre>
+    <button type="submit">🧮 Рассчитать</button>
+  </form>
 
-    <button id="sendToBotBtn">📨 Отправить в Telegram</button>
-  </div>
+  <div id="result"></div>
+</div>
 
-  <script src="app.js"></script>
+<!-- App logic -->
+<script src="app.js"></script>
+
 </body>
 </html>
-
