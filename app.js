@@ -3,7 +3,7 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 
 // ===== API URL =====
-const API_URL = "https://hrmini-api.onrender.com";
+const API_URL = "https://hrmini-api.onrender.com/calculate";
 
 // ===== Elements =====
 const form = document.getElementById("calcForm");
@@ -128,5 +128,6 @@ function renderDetails(data) {
     → <b>${data.final} дней</b>
   `;
 }
+
 
 
